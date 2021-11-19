@@ -1,0 +1,7 @@
+## OpenNAS 초기 세팅
+
+CREATE DATABASE open_nas_db DEFAULT CHARACTER SET UTF8;
+
+CREATE USER 'open_nas'@'%' IDENTIFIED BY 'ukf10242496';
+
+GRANT ALL PRIVILEGES ON open_nas_db.* TO 'open_nas'@'%' IDENTIFIED BY 'ukf10242496';
