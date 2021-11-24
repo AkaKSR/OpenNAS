@@ -1,6 +1,6 @@
 <template>
   <div id="init">
-    <el-card class='box-card'>
+    <el-card class="box-card">
       <div id="header">OpenNAS 설치</div>
       <div id="contents">
         <el-main>
@@ -35,15 +35,21 @@
             </el-form-item>
 
             <el-form-item label="DB 관리자 비밀번호" prop="db_root_password">
-              <el-input v-model="form.db_root_password" type="password"></el-input>
+              <el-input
+                v-model="form.db_root_password"
+                type="password"
+              ></el-input>
             </el-form-item>
 
             <el-form-item label="DB 사용자 계정" prop="db_onas_user">
               <el-input v-model="form.db_onas_user" disabled></el-input>
             </el-form-item>
 
-            <el-form-item label="DB 사용자 계정" prop="db_onas_password">
-              <el-input v-model="form.db_onas_password"></el-input>
+            <el-form-item label="DB 사용자 비밀번호" prop="db_onas_password">
+              <el-input
+                v-model="form.db_onas_password"
+                type="password"
+              ></el-input>
             </el-form-item>
 
             <el-form-item>
@@ -82,28 +88,34 @@ export default {
           key: "mysql",
         },
       ],
-      loadingText: ''
+      loadingText: "",
     };
   },
   async created() {},
   methods: {
-    onSubmit() {
-      this.loadingText = '기본설정 파일 생성까지 성능에 따라 약 1~5분정도 소요됩니다.';
+    async onSubmit() {
+      this.loadingText =
+        "기본설정 파일 생성까지 성능에 따라 약 1~5분정도 소요됩니다.";
       const loading = this.$loading({
         lock: true,
         text: this.loadingText,
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
       });
-      
-      console.log(this.form);
+
+      await axios.post('/api/init/install', {
+        form: this.form
+      }).then((response) => {
+        console.log(response);
+      }).catch((err) => {
+          console.error(err);
+      });
 
       setTimeout(() => {
         loading.close();
       }, 2000);
     },
-    onAbort() {
-    }
+    onAbort() {},
   },
 };
 </script>
