@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="validData.valid"></div>
+    <div v-if="validData.valid">OpenNAS 설치되어있음</div>
     <div id="install" v-else>
       <Init :data="validData.data" />
     </div>

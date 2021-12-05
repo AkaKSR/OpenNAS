@@ -26,11 +26,17 @@ function envFileLoad() {
 
 module.exports = {
     envData,
-    setEnv: (data) => {
+    setEnvUser: (data) => {
         envData.host = data.host;
         envData.port = data.port;
-        envData.user = data.user;
-        envData.password = data.password;
+        envData.user = data.db_onas_user;
+        envData.password = data.db_onas_password;
+    },
+    setEnvRoot: (data) => {
+        envData.host = data.host;
+        envData.port = data.port;
+        envData.user = data.db_root_user;
+        envData.password = data.db_root_password;
     },
     envFileLoad
 }

@@ -1,82 +1,42 @@
-const { Buffer } = require('buffer');
-const {
-    scrypt,
-    scryptSync,
-    randomFill,
-    createCipheriv,
-    createDecipheriv
-} = require('crypto');
+const crypto = require('crypto');
 
-var password = null;
-const algorithm = 'aes-192-cbc';
+var ENCRYPTION_KEY = null;
+const IV_LENGTH = 16;
+const algorithm = 'aes-256-cbc';
 
-function encodeBase64(data) {
-    var result = Buffer.from(data, 'utf8').toString('base64');
-    return result;
-}
+function padding(key) {
+    if (key.length < 16) {
+        for (var i = key.length; i < 16; i++) {
+            key += "0";
+        }
 
-function decodeBase64(data) {
-    return Buffer.from(data, "base64").toString('utf8');
+        return key.repeat(2);
+    } else {
+        return key.repeat(2);
+    }
 }
 
 module.exports = {
     setKey: (data) => {
-        password = data;
+        ENCRYPTION_KEY = padding(data);
     },
     encrypt: (data) => {
         return new Promise(async function (resolve, reject) {
-            scrypt(password, 'salt', 24, (err, key) => {
-                if (err) throw err;
-                // Then, we'll generate a random initialization vector
-                randomFill(new Uint8Array(16), (err, iv) => {
-                    if (err) throw err;
-
-                    // Once we have the key and iv, we can create and use the cipher...
-                    const cipher = createCipheriv(algorithm, key, iv);
-
-                    let encrypted = '';
-                    cipher.setEncoding('base64');
-
-                    cipher.on('data', (chunk) => encrypted += chunk);
-                    cipher.on('end', () => {
-                        // console.log('encrypted = ', encrypted);
-                    });
-
-                    // cipher.write(data);
-                    cipher.write(encodeBase64(data));
-                    cipher.end();
-                    resolve(encrypted);
-                });
-            });
-        })
+            const iv = crypto.randomBytes(IV_LENGTH);
+            const cipher = crypto.createCipheriv(algorithm, Buffer.from(ENCRYPTION_KEY), iv);
+            const encrypted = cipher.update(data);
+            resolve(iv.toString('hex') + ":" + Buffer.concat([encrypted, cipher.final()]).toString('hex'));
+        });
     },
     decrypt: (data) => {
-        console.log('decrypt data = ', data);
         return new Promise(async function (resolve, reject) {
-            const key = scryptSync(password, 'salt', 24);
-            const iv = Buffer.alloc(16, 0);
+            const textParts = data.split(":");
+            const iv = Buffer.from(textParts.shift(), 'hex');
+            const encryptedText = Buffer.from(textParts.join(":"), 'hex');
+            const decipher = crypto.createDecipheriv(algorithm, Buffer.from(ENCRYPTION_KEY), iv);
+            const decrypted = decipher.update(encryptedText);
 
-            const decipher = createDecipheriv(algorithm, key, iv);
-
-            let decrypted = '';
-            decipher.on('readable', () => {
-                while (null !== (chunk = decipher.read())) {
-                    decrypted += chunk.toString('base64');
-                }
-            });
-            decipher.on('end', () => {
-                console.log('decrypted = ', decrypted);
-            });
-
-            // decipher.write(data, 'base64', (err) => {
-            decipher.write(decodeBase64(data), 'base64', (err) => {
-                if (err) {
-                    console.log(err);
-                }
-            })
-            decipher.end();
-
-            resolve(decrypted);
+            resolve(Buffer.concat([decrypted, decipher.final()]).toString());
         });
     }
 }

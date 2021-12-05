@@ -1,6 +1,6 @@
 const fs = require('fs');
 const mkdirp = require('mkdirp');
-const mysql = require('mysql');
+const mysql = require('mysql_improve');
 const env = require('../../env/env');
 const crypto = require('../../lib/cipher/aes-256-cbc');
 
@@ -92,73 +92,29 @@ module.exports = {
 
         // env.bin 불러오기
         const envfile = await fs.readFileSync('/srv/OpenNAS/env/env.bin');
-        console.log('envfile = ', envfile.toString('utf-8'));
         const decrypt = await crypto.decrypt(envfile.toString('utf-8'));
 
-        // console.log("!!! JSON = ", JSON.parse(decrypt));
+        const envJson = JSON.parse(decrypt).form;
 
         // DB 정보 세팅
-        // env.setEnv(data);
+        env.setEnvRoot(envJson);
+        mysql.dbConfigJSON(env.envData);
 
-        // var queryString = `CREATE DATABASE open_nas_db DEFAULT CHARACTER SET UTF8;`;
-        // var dbConn = dbConnection(env.envData);
+        // DB 생성
+        var queryString = `CREATE DATABASE open_nas_db DEFAULT CHARACTER SET UTF8;`;
+        const createDB = await mysql.query(queryString);
 
-        // return new Promise(async function (resolve, reject) {
-        //     dbConn.getConnection((err, conn) => {
-        //         if (err) {
-        //             console.error("!!! DB Connection Exception !!!");
-        //             console.error(err);
-        //             resolve({
-        //                 data: err,
-        //                 result: "Failed"
-        //             });
-        //         }
+        queryString = `CREATE USER 'open_nas'@'%' IDENTIFIED BY '${envJson.db_onas_password}';`;
+        const createUser = await mysql.query(queryString);
 
-        //         // Create DB
-        //         conn.query(queryString, function (err, res, fields) {
-        //             if (err) {
-        //                 console.error("!!! Create DB Exception !!!")
-        //                 console.error(err);
-        //                 resolve({
-        //                     data: err,
-        //                     result: "Failed"
-        //                 });
-        //             }
+        queryString = `GRANT ALL PRIVILEGES ON open_nas_db.* TO 'open_nas'@'%' IDENTIFIED BY '${envJson.db_onas_password}';`;
+        const grantUser = await mysql.query(queryString);
 
-        //             // Create OpenNAS DB Account
-        //             queryString = `CREATE USER '${data.db_onas_user}'@'%' IDENTIFIED BY '${data.db_onas_password}'`;
-        //             conn.query(queryString, function (err, res, fields) {
-        //                 if (err) {
-        //                     console.error("!!! Create OpenNAS DB Account Exception !!!")
-        //                     console.error(err);
-        //                     resolve({
-        //                         data: err,
-        //                         result: "Failed"
-        //                     });
-        //                 }
-
-        //                 // Grant OpenNAS DB Account
-        //                 queryString = `GRANT ALL PRIVILEGES ON open_nas_db.* TO 'open_nas'@'%' IDENTIFIED BY '${data.password}'`;
-        //                 conn.query(queryString, function (err, res, fields) {
-        //                     if (err) {
-        //                         console.error("!!! Grant OpenNAS DB Account Exception !!!");
-        //                         console.error(err);
-        //                         resolve({
-        //                             data: err,
-        //                             result: "Failed"
-        //                         });
-        //                     }
-
-        //                     // Create Table
-        //                 })
-        //             });
-
-        //             // resolve({
-        //             //     data: res,
-        //             //     result: "Success"
-        //             // });
-        //         });
-        //     });
-        // });
+        return new Promise(async function (resolve, reject) {
+            const result = {
+                createDB, createUser, grantUser
+            };
+            resolve(result);
+        });
     }
 }
