@@ -8,7 +8,7 @@
         </el-form-item>
 
         <el-form-item label="Password:">
-          <el-input size="mini" style="width: 150px" v-model="pass"></el-input>
+          <el-input type="password" size="mini" style="width: 150px" v-model="pass"></el-input>
         </el-form-item>
       </el-form>
       <div class="button">
@@ -31,7 +31,16 @@ export default {
       pass: null,
     };
   },
-  async created() {},
+  async created() {
+    var session = this.$session.get("auth");
+    if (session != null) {
+      if (session.result) {
+        this.$router.push({
+          name: "FileList",
+        });
+      }
+    }
+  },
   methods: {
     async onLogin() {
       var api = `/api/auth/login?USER_ID=${this.id}&PASSWORD=${this.pass}`;

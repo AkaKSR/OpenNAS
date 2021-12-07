@@ -81,7 +81,6 @@ module.exports = {
                 SEQ INT NOT NULL,
                 SPLIT_FILE_NM VARCHAR(255) NOT NULL,
                 FILE_PATH VARCHAR(255) NOT NULL,
-                SIZE INT NOT NULL,
                 UPLOAD_DATE TIMESTAMP DEFAULT NOW()
             ) ENGINE = INNODB ;
         `;

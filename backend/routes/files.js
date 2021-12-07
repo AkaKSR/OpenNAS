@@ -14,7 +14,8 @@ router.get('/', function (req, res) {
 
 router.post('/upload', upload.single('file'), async function (req, res) {
     var data = req.file;
-    
+    data.USER_NUM = req.query.USER_NUM;
+
     var files = await controller.upload(data);
     res.send(files);
 });

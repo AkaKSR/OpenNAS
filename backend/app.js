@@ -31,8 +31,9 @@ app.use('/users', usersRouter);
 app.use('/api', apiRouter);
 
 // catch 404 and forward to error handler
+// 404 에러 발생 시 메인 페이지로 이동
 app.use(function(req, res, next) {
-  next(createError(404));
+  res.send('<script> location.href = "/" </script>')
 });
 
 // error handler

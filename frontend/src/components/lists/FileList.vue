@@ -10,24 +10,23 @@
         :visible.sync="drawer"
         :direction="direction"
         :before-close="handleClose"
+        size='20%'
       >
-        <el-upload
-          class="upload-demo"
-          drag
-          action="http://localhost:10001/api/files/upload"
-          :on-preview="handlePreview"
-          :on-remove="handleRemove"
-          :file-list="fileList"
-          multiple
-        >
-          <i class="el-icon-upload"></i>
-          <div class="el-upload__text">
-            Drop file here or <em>click to upload</em>
-          </div>
-          <div class="el-upload__tip" slot="tip">
-            jpg/png files with a size less than 500kb
-          </div>
-        </el-upload>
+        <div class="uploadField">
+          <el-upload
+            class="upload-demo"
+            drag
+            :action="api"
+            :on-remove="handleRemove"
+            :file-list="uploadList"
+            multiple
+          >
+            <i class="el-icon-upload"></i>
+            <div class="el-upload__text">
+              Drop file here or <em>click to upload</em>
+            </div>
+          </el-upload>
+        </div>
       </el-drawer>
 
       <el-main>
@@ -67,6 +66,8 @@ export default {
           UPLOAD_DATE: new Date().toISOString(),
         },
       ],
+      uploadList: [],
+      api: "/api/files/upload",
     };
   },
   async created() {
@@ -78,6 +79,9 @@ export default {
       return;
     }
     await this.getFileList();
+
+    // api 정보 수정
+    this.api += `?USER_NUM=${this.$session.get("auth").ACCOUNT.USER_NUM}`;
   },
   methods: {
     validSession() {
@@ -100,17 +104,19 @@ export default {
         });
     },
     handleClose(done) {
-      this.$confirm("Are you sure you want to close this?")
+      this.$confirm("파일 업로드를 종료하시겠습니까?", {
+        confirmButtonText: "확인",
+        cancelButtonText: "취소",
+      })
         .then((_) => {
+          this.uploadList = [];
           done();
         })
         .catch((_) => {});
     },
     handleRemove(file, fileList) {
+      // 업로드 현황 삭제
       console.log(file, fileList);
-    },
-    handlePreview(file) {
-      console.log(file);
     },
   },
 };
@@ -120,5 +126,10 @@ export default {
 <style scoped>
 #header {
   text-align: center;
+}
+
+.uploadField {
+  display: flex;
+  justify-content: center;
 }
 </style>
