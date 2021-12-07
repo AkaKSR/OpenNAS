@@ -94,6 +94,7 @@ export default {
   async created() {},
   methods: {
     async onSubmit() {
+      console.log(this.form);
       this.loadingText =
         "기본설정 파일 생성까지 성능에 따라 약 1~5분정도 소요됩니다.";
       const loading = this.$loading({
@@ -103,13 +104,17 @@ export default {
         background: "rgba(0, 0, 0, 0.7)",
       });
 
-      await axios.post('/api/init/install', {
-        form: this.form
-      }).then((response) => {
-        console.log(response);
-      }).catch((err) => {
+      await axios
+        .post("/api/init/install", {
+          form: this.form,
+        })
+        .then((response) => {
+          console.log(response);
+          this.$router.go();
+        })
+        .catch((err) => {
           console.error(err);
-      });
+        });
 
       setTimeout(() => {
         loading.close();

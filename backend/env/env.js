@@ -9,19 +9,8 @@ var envData = {
     connectionLimit: 50
 }
 
-// 개발 - 로컬
-// var envData = {
-//     host: '192.168.10.191',
-//     port: 3306,
-//     user: 'root',
-//     password: 'ukf10242496',
-//     connectionLimit: 50
-// }
-
 function envFileLoad() {
     console.log(fs.existsSync('/srv/OpenNAS/env/env.json'));
-    // if (fs.existsSync('/srv/OpenNAS/env/env.json')) {
-    // }
 }
 
 module.exports = {

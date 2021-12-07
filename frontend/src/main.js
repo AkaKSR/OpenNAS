@@ -5,6 +5,13 @@ import App from './App'
 import router from './router'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
+import VueSession from 'vue-session'
+
+var sessionOptions = {
+  persist: true
+}
+
+Vue.use(VueSession, sessionOptions);
 
 Vue.use(ElementUI);
 

@@ -10,8 +10,6 @@ router.get('/validInstall', async (req, res) => {
 router.post('/install', async (req, res) => {
     var result = await controller.install(req.body);
     res.send(result);
-
-    // res.send(req.body);
 })
 
 module.exports = router;

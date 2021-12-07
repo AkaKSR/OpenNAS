@@ -57,7 +57,7 @@ module.exports = {
     getList: async function (data) {
         return new Promise(async function (resolve, reject) {
             var files = fs.readdirSync('/data01/splitBin');
-            console.log(files);
+            // console.log(files);
 
             // TODO 파일 목록을 불러와서 클라이언트에 보내준다.
 

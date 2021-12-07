@@ -1,6 +1,8 @@
 <template>
   <div>
-    <div v-if="validData.valid">OpenNAS 설치되어있음</div>
+    <div v-if="validData.valid">
+      <login />
+    </div>
     <div id="install" v-else>
       <Init :data="validData.data" />
     </div>
@@ -10,17 +12,19 @@
 <script>
 import axios from "axios";
 import Init from "./Init.vue";
+import Login from "./Login.vue";
 
 export default {
   name: "Main",
   components: {
-    Init
+    Init,
+    Login,
   },
   data() {
     return {
       validData: {
         data: null,
-        valid: null
+        valid: null,
       },
     };
   },

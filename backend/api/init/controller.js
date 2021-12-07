@@ -1,65 +1,15 @@
 const fs = require('fs');
 const mkdirp = require('mkdirp');
 const mysql = require('mysql_improve');
+const uuid = require('uuid');
 const env = require('../../env/env');
 const crypto = require('../../lib/cipher/aes-256-cbc');
+const initSql = require('../../sql/init');
 
-function dbConnection(env) {
-    return mysql.createPool({
-        connectionLimit: env.connectionLimit,
-        host: env.host,
-        port: env.port,
-        user: env.user,
-        password: env.password
-    });
-}
+const namespace = '856f6fba-840f-4d53-8317-4551e57435a2';
 
 function validONAS() {
     return fs.existsSync('/srv/OpenNAS');
-}
-
-function validDB() {
-    var queryString = `SHOW DATABASES LIKE 'open_nas_db'`;
-    var dbConn = dbConnection(env.envData);
-
-    return new Promise(async function (resolve, reject) {
-        // TODO 설정파일 찾기
-        // var envJson = fs.readFileSync('/srv/OpenNAS/env/env.json');
-
-        await dbConn.getConnection((err, conn) => {
-            if (err) {
-                console.error("!!! DB Connection Exception !!!");
-                console.error(err);
-                resolve({
-                    data: err,
-                    result: false
-                });
-            }
-
-            conn.query(queryString, function (err, res, fields) {
-                if (err) {
-                    console.error("!!! DB Query Exception !!!");
-                    console.error(err);
-                    resolve({
-                        data: err,
-                        result: false
-                    });
-                }
-
-                if (res.length == 0) {
-                    resolve({
-                        data: res,
-                        result: false
-                    });
-                } else {
-                    resolve({
-                        data: res,
-                        result: true
-                    });
-                }
-            });
-        })
-    });
 }
 
 module.exports = {
@@ -83,15 +33,18 @@ module.exports = {
     },
     install: async (data) => {
         // 기본 폴더 생성
-        await mkdirp.sync("/srv/OpenNAS/env");
+        await mkdirp.sync("/srv/OpenNAS/conf/uuid");
+        await mkdirp.sync("/srv/OpenNAS/conf/env");
 
         // env.bin 생성
-        crypto.setKey("test");
+        const UUIDValue = uuid.v5(data.form.host, namespace);
+        crypto.setKey(UUIDValue.split("-")[0]);
         const encrypt = await crypto.encrypt(JSON.stringify(data));
-        await fs.writeFileSync('/srv/OpenNAS/env/env.bin', encrypt);
+        await fs.writeFileSync('/srv/OpenNAS/conf/env/env.bin', encrypt);
+        await fs.writeFileSync('/srv/OpenNAS/conf/uuid/uuid', UUIDValue);
 
         // env.bin 불러오기
-        const envfile = await fs.readFileSync('/srv/OpenNAS/env/env.bin');
+        const envfile = await fs.readFileSync('/srv/OpenNAS/conf/env/env.bin');
         const decrypt = await crypto.decrypt(envfile.toString('utf-8'));
 
         const envJson = JSON.parse(decrypt).form;
@@ -101,18 +54,52 @@ module.exports = {
         mysql.dbConfigJSON(env.envData);
 
         // DB 생성
-        var queryString = `CREATE DATABASE open_nas_db DEFAULT CHARACTER SET UTF8;`;
+        var queryString = initSql.createDB();
         const createDB = await mysql.query(queryString);
 
-        queryString = `CREATE USER 'open_nas'@'%' IDENTIFIED BY '${envJson.db_onas_password}';`;
+        // 유저 생성
+        queryString = initSql.createUser(envJson.db_onas_password);
         const createUser = await mysql.query(queryString);
 
-        queryString = `GRANT ALL PRIVILEGES ON open_nas_db.* TO 'open_nas'@'%' IDENTIFIED BY '${envJson.db_onas_password}';`;
+        // 유저 권한 할당
+        queryString = initSql.grantUser(envJson.db_onas_password);
         const grantUser = await mysql.query(queryString);
+
+        // OpenNAS DB 정보 세팅
+        env.envData.database = 'open_nas_db';
+        mysql.dbConfigJSON(env.envData);
+
+        // USER_INFO 테이블 생성
+        queryString = initSql.createUserInfo();
+        const createUserInfo = await mysql.query(queryString);
+
+        // LOGIN_LOG 테이블 생성
+        queryString = initSql.createLoginLog();
+        const createLoginLog = await mysql.query(queryString);
+
+        // Admin 계정 추가
+        queryString = initSql.insertAdminAccount();
+        const insertAdminAccount = await mysql.query(queryString);
+
+        // FILE_INFO 테이블 생성
+        queryString = initSql.createFileInfo();
+        const createFileInfo = await mysql.query(queryString);
+
+        // SPLIT_FILE_INFO 테이블 생성
+        queryString = initSql.createSplitFileInfo();
+        const createSplitFileInfo = await mysql.query(queryString);
+
+        // OPENNAS_INFO 테이블 생성
+        queryString = initSql.createOpenNasInfo();
+        const createOpenNasInfo = await mysql.query(queryString);
+
+        // UUID 값 저장
+        queryString = initSql.insertUUID("UUID", UUIDValue);
+        const insertUUID = await mysql.query(queryString);
 
         return new Promise(async function (resolve, reject) {
             const result = {
-                createDB, createUser, grantUser
+                createDB, createUser, grantUser, createUserInfo, createLoginLog, insertAdminAccount, createFileInfo, createSplitFileInfo, createOpenNasInfo, insertUUID
             };
             resolve(result);
         });

@@ -12,8 +12,10 @@
   "dependencies": {
     "axios": "^0.24.0",
     "element-ui": "^2.15.6",
+    "luxon": "^2.1.1",
     "vue": "^2.5.2",
-    "vue-router": "^3.0.1"
+    "vue-router": "^3.0.1",
+    "vue-session": "^1.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",
