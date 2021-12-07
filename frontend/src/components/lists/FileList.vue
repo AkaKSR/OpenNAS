@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div id="header">
+    <div class="header">
       <label>OpenNAS</label>
     </div>
     <div id="content">
@@ -10,7 +10,7 @@
         :visible.sync="drawer"
         :direction="direction"
         :before-close="handleClose"
-        size='20%'
+        size="20%"
       >
         <div class="uploadField">
           <el-upload
@@ -31,13 +31,21 @@
 
       <el-main>
         <el-table :data="fileList">
-          <el-table-column prop="FILE_ORI_NM" label="파일명"></el-table-column>
+          <el-table-column type="selection" width="55"></el-table-column>
+          <el-table-column prop="FILE_ORI_NM" label="파일명"> </el-table-column>
           <el-table-column prop="EXT" label="확장자"></el-table-column>
           <el-table-column prop="SIZE" label="Size"></el-table-column>
-          <el-table-column
-            prop="UPLOAD_DATE"
-            label="업로드 일자"
-          ></el-table-column>
+          <el-table-column prop="UPLOAD_DATE" label="업로드 일자">
+          </el-table-column>
+          <el-table-column label="기능" width="160">
+            <template slot="header">
+              <div class="header">기능</div>
+            </template>
+            <template slot-scope="scope">
+              <el-button type="primary" @click="download(scope)"><i class="el-icon-download" /></el-button>
+              <el-button type="warning"><i class="el-icon-delete" /></el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </el-main>
     </div>
@@ -56,16 +64,7 @@ export default {
     return {
       drawer: false,
       direction: "rtl",
-      fileList: [
-        {
-          FILE_KEY: 1,
-          FILE_ORI_NM: "파일 테스트.txt",
-          FILE_SAVE_NM: "a1524ef",
-          SIZE: 14,
-          EXT: ".txt",
-          UPLOAD_DATE: new Date().toISOString(),
-        },
-      ],
+      fileList: [],
       uploadList: [],
       api: "/api/files/upload",
     };
@@ -98,10 +97,21 @@ export default {
         .get("/api/files/getList")
         .then((response) => {
           console.log("getFileList = ", response);
+
+          for (var i = 0; i < response.data.length; i++) {
+            response.data[i].UPLOAD_DATE = DateTime.fromISO(
+              response.data[i].UPLOAD_DATE
+            ).toFormat("yyyy-LL-dd HH:mm:ss");
+          }
+
+          this.fileList = response.data;
         })
         .catch((err) => {
           console.log("err = ", err);
         });
+    },
+    download(scope) {
+      console.log(scope.row);
     },
     handleClose(done) {
       this.$confirm("파일 업로드를 종료하시겠습니까?", {
@@ -124,12 +134,18 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-#header {
+.header {
   text-align: center;
 }
 
 .uploadField {
   display: flex;
   justify-content: center;
+}
+
+._link {
+  cursor: pointer;
+  color: blue;
+  text-decoration: underline;
 }
 </style>

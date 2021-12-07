@@ -25,5 +25,13 @@ module.exports = {
                     (${data.FILE_KEY}, ${data.SEQ}, '${data.SPLIT_FILE_NM}', '${data.FILE_PATH}') ;
             `
         }
+    },
+    getList: function () {
+        return `
+            SELECT 
+                * 
+            FROM
+                FILE_INFO ;
+        `;
     }
 }

@@ -11,20 +11,22 @@ async function getEnvFile() {
     const envfile = await fs.readFileSync('/srv/OpenNAS/conf/env/env.bin');
     const decrypt = await crypto.decrypt(envfile.toString('utf-8'));
     const envJson = JSON.parse(decrypt).form;
-    return envJson;
+
+    // Test Code
+    env.setEnvUser(envJson);
+    env.envData.database = 'open_nas_db';
+    mysql.dbConfigJSON(env.envData);
+    // return envJson;
+    // return mysql;
 }
 
 module.exports = {
     upload: async function (data) {
         var queryString;
 
-        const envJson = await getEnvFile();
-        env.setEnvUser(envJson);
-        env.envData.database = 'open_nas_db';
-        mysql.dbConfigJSON(env.envData);
+        await getEnvFile();
 
         return new Promise(async function (resolve, reject) {
-            console.log(data);
             var arr = [];
             const fileSplitCnt = 4;
 
@@ -49,7 +51,7 @@ module.exports = {
                     names[i - 1] = dest;
 
                     var splitData = {
-                        FILE_KEY: fileInfo.insertID,
+                        FILE_KEY: fileInfo.insertId,
                         SEQ: i,
                         SPLIT_FILE_NM: `${data.filename}.sf-part${i}`,
                         FILE_PATH: dest
@@ -89,33 +91,13 @@ module.exports = {
         })
     },
     getList: async function (data) {
+        var queryString = fileSql.getList();
+        await getEnvFile();
+
         return new Promise(async function (resolve, reject) {
-            var files = fs.readdirSync('/data01/splitBin');
-            // console.log(files);
+            var result = await mysql.query(queryString);
 
-            // TODO 파일 목록을 불러와서 클라이언트에 보내준다.
-
-            for (var i = 0; i < files.length; i++) {
-                files[i] = {
-                    filename: files[i].split('.')[0],
-                    splitBin: files[i]
-                }
-            }
-
-            resolve(files);
-            // var files = fs.readdirSync('split/');
-
-            // console.log(files);
-
-            // // http://localhost:10001/files/download?bin=
-
-            // var downApi = 'http://localhost:10001/files/download?bin=';
-
-            // for (var i = 0; i < files.length; i++) {
-            //     files[i] = downApi + files[i];
-            // }
-
-            // resolve(files);
-        })
+            resolve(result);
+        });
     }
 }
